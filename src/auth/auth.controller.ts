@@ -14,7 +14,7 @@ export class AuthController {
 
   @MessagePattern('auth.login.user')
   login(){
-    return 'login';
+    return 'login desde ms';
   }
 
   @MessagePattern('auth.verify.user')
