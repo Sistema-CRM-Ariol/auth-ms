@@ -4,10 +4,16 @@ import { RpcException } from '@nestjs/microservices';
 import * as bcrypt from 'bcrypt'
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RegisterUserDto } from './dto';
+import { LoginUserDto } from './dto/login-user.dto';
+import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private readonly jwtService: JwtService, 
+    ) { }
 
     async register(registerUserDto: RegisterUserDto) {
 
@@ -53,7 +59,7 @@ export class AuthService {
             const { password: _, ...rest } = user; 
 
             return {
-                rest,
+                user: rest,
                 message: "Usuario registrado con exito"
             };
 
@@ -63,6 +69,51 @@ export class AuthService {
                 message: error.message
             });
         }
+    }
+
+    async login(loginUserDto: LoginUserDto) {
+
+        const { email, password } = loginUserDto;
+        try {
+            
+            const user = await this.prisma.user.findFirst({
+                where: { email }
+            })
+    
+            if ( !user ) {
+                throw new RpcException({
+                    message: "Credenciales incorrectas",
+                    status: HttpStatus.BAD_REQUEST
+                });
+            }
+            
+            const isPasswordValid = bcrypt.compareSync(password, user.password);
+    
+            if( !isPasswordValid ){
+                throw new RpcException({
+                    message: "Contraseña incorrecta",
+                    status: HttpStatus.UNAUTHORIZED,
+                })
+            }
+
+            const { password: _, ...rest } = user; 
+
+            return {
+                user: rest,
+                token: await this.signJWT({id: rest.id, name: rest.name, email: rest.email})
+            };
+
+        } catch (error) {
+            throw new RpcException({
+                status: HttpStatus.BAD_REQUEST,
+                message: error.message
+            });
+        }
+    }
+
+
+    async signJWT( payload: JwtPayload ){
+        return this.jwtService.sign(payload)
     }
 
 }

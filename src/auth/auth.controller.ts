@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { RegisterUserDto } from './dto';
+import { LoginUserDto, RegisterUserDto } from './dto';
 
 @Controller()
 export class AuthController {
@@ -13,8 +13,8 @@ export class AuthController {
   }
 
   @MessagePattern('auth.login.user')
-  login(){
-    return 'login desde ms';
+  login(@Payload() loginUserDto: LoginUserDto){
+    return this.authService.login(loginUserDto);
   }
 
   @MessagePattern('auth.verify.user')
