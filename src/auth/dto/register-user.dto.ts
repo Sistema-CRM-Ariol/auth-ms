@@ -1,26 +1,38 @@
-import { IsOptional, IsString, IsStrongPassword } from 'class-validator'
+import { IsArray, IsOptional, IsString, IsStrongPassword, ValidateNested, IsIn } from 'class-validator';
+import { Type } from 'class-transformer';
+
+class PermissionDto {
+    @IsString()
+    module: string;
+
+    @IsArray()
+    @IsIn(['create', 'read', 'update', 'remove', 'report'], { each: true })
+    actions: ('create' | 'read' | 'update' | 'remove' | 'report')[];
+}
 
 export class RegisterUserDto {
+    @IsString()
+    name: string;
 
     @IsString()
-    name: string
+    ci: string;
 
     @IsString()
-    ci: string
-
-    @IsString()
-    lastname: string
+    lastname: string;
     
     @IsString()
-    email: string
+    email: string;
 
     @IsString()
     @IsStrongPassword()
-    password: string
+    password: string;
     
     @IsString()
     @IsOptional()
-    avatar?: string
+    avatar?: string;
 
-
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => PermissionDto)
+    permissions: PermissionDto[];
 }
