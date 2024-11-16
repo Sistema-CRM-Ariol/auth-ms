@@ -7,6 +7,7 @@ import { RegisterUserDto } from './dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { envs } from 'src/config';
 
 @Injectable()
 export class AuthService {
@@ -114,6 +115,26 @@ export class AuthService {
 
     async signJWT( payload: JwtPayload ){
         return this.jwtService.sign(payload)
+    }
+
+    async verifyToken(token: string){
+        try {
+            const { sub, iat, exp, ...user } = this.jwtService.verify(token, {
+                secret: envs.jwtSecret,
+            })
+
+            return {
+                user,
+                token: token,
+            }
+
+        } catch (error) {
+            console.log(error)
+            throw new RpcException({
+                status: HttpStatus.UNAUTHORIZED,
+                message: "Token invalido"
+            })
+        }
     }
 
 }
