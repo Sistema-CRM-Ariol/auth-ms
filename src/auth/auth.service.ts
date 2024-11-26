@@ -17,26 +17,32 @@ export class AuthService {
     ) { }
 
     async register(registerUserDto: RegisterUserDto) {
-
         const { permissions, password, ...newUser } = registerUserDto;
         try {
             
             const userExists = await this.prisma.user.findFirst({
                 where: {
                     OR: [
-                        { ci: registerUserDto.ci },
-                        { email: registerUserDto.email },
+                        { ci: newUser.ci },
+                        { email: newUser.email },
                     ]
                 }
             })
-    
-            if (userExists) {
+
+            if (userExists && userExists.ci === newUser.ci) {
+                throw new RpcException({
+                    message: "Ya se registro un usuario con este CI",
+                    status: HttpStatus.BAD_REQUEST
+                });
+            }
+            
+            if (userExists && userExists.email === newUser.email) {
                 throw new RpcException({
                     message: "Ya se registro un usuario con este correo",
                     status: HttpStatus.BAD_REQUEST
                 });
             }
-            
+
             const user = await this.prisma.user.create({
                 data: {
                     ...newUser,
@@ -45,7 +51,6 @@ export class AuthService {
                         create: permissions,
                     },
                     avatar: null,
-                    // TODO: Hash de la contraseña
                 },
                 include: {
                     permissions: {
@@ -65,6 +70,7 @@ export class AuthService {
             };
 
         } catch (error) {
+            console.log(error)
             throw new RpcException({
                 status: HttpStatus.BAD_REQUEST,
                 message: error.message

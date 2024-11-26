@@ -8,7 +8,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
   
   @MessagePattern('auth.register.user')
-  register(@Payload() registerUserDto: RegisterUserDto){
+  register(@Payload() registerUserDto: RegisterUserDto){  
     return this.authService.register(registerUserDto);
   }
 

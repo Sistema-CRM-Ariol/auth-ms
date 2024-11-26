@@ -14,7 +14,7 @@ export class RegisterUserDto {
     @IsString()
     name: string;
 
-    @IsString()
+    @IsString({ message: "El campo CI es obligatorio" })
     ci: string;
 
     @IsString()
