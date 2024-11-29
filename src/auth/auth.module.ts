@@ -11,7 +11,7 @@ import { envs } from 'src/config';
     JwtModule.register({
       global: true,
       secret: envs.jwtSecret,
-      signOptions: { expiresIn: '2h' },
+      signOptions: { expiresIn: '12h' },
     }),
   ],
   controllers: [AuthController],
