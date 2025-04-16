@@ -27,6 +27,6 @@ async function bootstrap() {
   );
 
   await app.listen();
-  logger.log(`Auth Microservice running on port ${envs.port}`);
+  logger.log(`Microservice is listening on ${ envs.natsServers }`);
 }
 bootstrap();
