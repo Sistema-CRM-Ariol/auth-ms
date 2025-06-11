@@ -47,19 +47,9 @@ export class AuthService {
                 data: {
                     ...newUser,
                     password: bcrypt.hashSync(password, 10),
-                    permissions: {
-                        create: permissions,
-                    },
+                    
                     avatar: null,
                 },
-                include: {
-                    permissions: {
-                        select: {
-                            module: true,
-                            actions: true
-                        }
-                    },
-                }
             });
     
             const { password: _, ...rest } = user; 
