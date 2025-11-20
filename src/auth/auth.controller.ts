@@ -5,20 +5,20 @@ import { LoginUserDto, RegisterUserDto } from './dto';
 
 @Controller()
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
-  
-  @MessagePattern('auth.register.user')
-  register(@Payload() registerUserDto: RegisterUserDto){  
-    return this.authService.register(registerUserDto);
-  }
+    constructor(private readonly authService: AuthService) { }
 
-  @MessagePattern('auth.login.user')
-  login(@Payload() loginUserDto: LoginUserDto){
-    return this.authService.login(loginUserDto);
-  }
+    @MessagePattern('auth.register.user')
+    register(@Payload() registerUserDto: RegisterUserDto) {
+        return this.authService.register(registerUserDto);
+    }
 
-  @MessagePattern('auth.verify.user')
-  verifyToken(@Payload() token: string){
-    return this.authService.verifyToken(token);
-  }
+    @MessagePattern('auth.login.user')
+    login(@Payload() loginUserDto: LoginUserDto) {
+        return this.authService.login(loginUserDto);
+    }
+
+    @MessagePattern('auth.verify.user')
+    verifyToken(@Payload() token: string) {
+        return this.authService.verifyToken(token);
+    }
 }
