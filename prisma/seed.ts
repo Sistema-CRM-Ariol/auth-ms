@@ -63,6 +63,43 @@ async function main() {
         },
     });
 
+    const inventoriesPermissions = await prisma.permission.create({
+        data: {
+            module: 'inventories',
+            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.report],
+        },
+    });
+
+    const rolesPermissions = await prisma.permission.create({
+        data: {
+            module: 'roles',
+            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete],
+        },
+    });
+
+    const quotationsPermissions = await prisma.permission.create({
+        data: {
+            module: 'quotations',
+            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.report],
+        },
+    });
+
+    const salesPermissions = await prisma.permission.create({
+        data: {
+            module: 'sales',
+            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.report],
+        },
+    });
+
+    const purchasesPermissions = await prisma.permission.create({
+        data: {
+            module: 'purchases',
+            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.report],
+        },
+    });
+
+
+
     // Crear rol Admin (todos los permisos)
     const adminRole = await prisma.role.create({
         data: {
@@ -78,6 +115,11 @@ async function main() {
                     { id: warehousesPermissions.id },
                     { id: providersPermissions.id },
                     { id: providersCompaniesPermissions.id },
+                    { id: inventoriesPermissions.id },
+                    { id: rolesPermissions.id },
+                    { id: quotationsPermissions.id },
+                    { id: salesPermissions.id },
+                    { id: purchasesPermissions.id },
                 ],
             },
         },
