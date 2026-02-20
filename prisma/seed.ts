@@ -91,9 +91,9 @@ async function main() {
         },
     });
 
-    const purchasesPermissions = await prisma.permission.create({
+    const importsPermissions = await prisma.permission.create({
         data: {
-            module: 'purchases',
+            module: 'imports',
             actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.report],
         },
     });
@@ -119,7 +119,51 @@ async function main() {
                     { id: rolesPermissions.id },
                     { id: quotationsPermissions.id },
                     { id: salesPermissions.id },
-                    { id: purchasesPermissions.id },
+                    { id: importsPermissions.id },
+                ],
+            },
+        },
+    });
+
+    const salesRole = await prisma.role.create({
+        data: {
+            name: 'Sales',
+            summary: 'Encargado de ventas y cotizaciones',
+            permissions: {
+                connect: [
+                    { id: clientsPermissions.id },
+                    { id: productsPermissions.id },
+                    { id: salesPermissions.id },
+                    { id: quotationsPermissions.id },
+                ],
+            },
+        },
+    });
+
+    const inventoryRole = await prisma.role.create({
+        data: {
+            name: 'Inventory Manager',
+            summary: 'Encargado de gestión de inventarios y almacenes',
+            permissions: {
+                connect: [
+                    { id: productsPermissions.id },
+                    { id: warehousesPermissions.id },
+                    { id: inventoriesPermissions.id },
+                    { id: importsPermissions.id },
+                ],
+            },
+        },
+    });
+
+    const clientServiceRole = await prisma.role.create({
+        data: {
+            name: 'Customer Service',
+            summary: 'Encargado de atención al cliente y soporte',
+            permissions: {
+                connect: [
+                    { id: clientsPermissions.id },
+                    { id: salesPermissions.id },
+                    { id: quotationsPermissions.id },
                 ],
             },
         },
@@ -140,6 +184,60 @@ async function main() {
             lastname: 'User',
             roleId: adminRole.id,
             ci: '123456789',
+        }
+    })
+
+    // Crear usuario Sales
+    await prisma.user.delete({
+        where: { email: 'sales@correo.com' },
+    }).catch(() => {
+        // Ignorar si el usuario no existe
+    })
+
+    await prisma.user.create({
+        data: {
+            email: 'sales@correo.com',
+            password: await bcrypt.hash('sales123', 10),
+            name: 'Sales',
+            lastname: 'User',
+            roleId: salesRole.id,
+            ci: '987654321',
+        }
+    })
+
+    // Crear usuario Inventory Manager
+    await prisma.user.delete({
+        where: { email: 'inventory@correo.com' },
+    }).catch(() => {
+        // Ignorar si el usuario no existe
+    })
+
+    await prisma.user.create({
+        data: {
+            email: 'inventory@correo.com',
+            password: await bcrypt.hash('inventory123', 10),
+            name: 'Inventory',
+            lastname: 'Manager',
+            roleId: inventoryRole.id,
+            ci: '456789123',
+        }
+    })
+
+    // Crear usuario Customer Service
+    await prisma.user.delete({
+        where: { email: 'cliente@correo.com' },
+    }).catch(() => {
+        // Ignorar si el usuario no existe
+    })
+
+    await prisma.user.create({
+        data: {
+            email: 'cliente@correo.com',
+            password: await bcrypt.hash('cliente123', 10),
+            name: 'Customer',
+            lastname: 'Service',
+            roleId: clientServiceRole.id,
+            ci: '321654987',
         }
     })
 
