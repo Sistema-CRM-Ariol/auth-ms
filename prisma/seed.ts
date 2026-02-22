@@ -6,244 +6,137 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('🌱 Seeding database...');
 
-    // Crear permisos para diferentes módulos
-    const usersPermissions = await prisma.permission.create({
-        data: {
-            module: 'users',
-            actions: [Action.view, Action.create, Action.read, Action.update, Action.delete, Action.readOne],
-        },
-    });
+    // Eliminar en orden correcto para respetar las FK:
+    // 1. Usuarios (referencian roles)
+    // 2. Roles (referencian permisos vía join table)
+    // 3. Permisos
+    await prisma.user.deleteMany();
+    await prisma.role.deleteMany();
+    await prisma.permission.deleteMany();
 
-    const productsPermissions = await prisma.permission.create({
-        data: {
-            module: 'products',
-            actions: [Action.view, Action.create, Action.read, Action.update, Action.delete, Action.readOne, Action.readOne],
-        },
-    });
+    // Definición reutilizable de acciones por módulo
+    const allActions       = [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.report];
+    const crudActions      = [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete];
+    const crudReportActions = allActions;
 
-    const categoriesPermissions = await prisma.permission.create({
-        data: {
-            module: 'categories',
-            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.readOne],
-        },
-    });
+    // Crear roles con sus permisos propios (cada rol tiene sus propios registros de Permission)
+    const createRolesTransaction = await prisma.$transaction(async (tx) => {
 
-    const brandsPermissions = await prisma.permission.create({
-        data: {
-            module: 'brands',
-            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.readOne],
-        },
-    });
-
-    const clientsPermissions = await prisma.permission.create({
-        data: {
-            module: 'clients',
-            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.readOne],
-        },
-    });
-
-    const providersPermissions = await prisma.permission.create({
-        data: {
-            module: 'providers',
-            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.report],
-        },
-    });
-
-    const providersCompaniesPermissions = await prisma.permission.create({
-        data: {
-            module: 'providersCompanies',
-            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.report],
-        },
-    });
-
-    const warehousesPermissions = await prisma.permission.create({
-        data: {
-            module: 'warehouses',
-            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.report],
-        },
-    });
-
-    const inventoriesPermissions = await prisma.permission.create({
-        data: {
-            module: 'inventories',
-            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.report],
-        },
-    });
-
-    const rolesPermissions = await prisma.permission.create({
-        data: {
-            module: 'roles',
-            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete],
-        },
-    });
-
-    const quotationsPermissions = await prisma.permission.create({
-        data: {
-            module: 'quotations',
-            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.report],
-        },
-    });
-
-    const salesPermissions = await prisma.permission.create({
-        data: {
-            module: 'sales',
-            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.report],
-        },
-    });
-
-    const importsPermissions = await prisma.permission.create({
-        data: {
-            module: 'imports',
-            actions: [Action.view, Action.create, Action.read, Action.readOne, Action.update, Action.delete, Action.report],
-        },
-    });
-
-
-
-    // Crear rol Admin (todos los permisos)
-    const adminRole = await prisma.role.create({
-        data: {
-            name: 'Super Admin',
-            summary: 'Administrador del sistema y soporte técnico',
-            permissions: {
-                connect: [
-                    { id: categoriesPermissions.id },
-                    { id: brandsPermissions.id },
-                    { id: clientsPermissions.id },
-                    { id: usersPermissions.id },
-                    { id: productsPermissions.id },
-                    { id: warehousesPermissions.id },
-                    { id: providersPermissions.id },
-                    { id: providersCompaniesPermissions.id },
-                    { id: inventoriesPermissions.id },
-                    { id: rolesPermissions.id },
-                    { id: quotationsPermissions.id },
-                    { id: salesPermissions.id },
-                    { id: importsPermissions.id },
-                ],
+        const adminRole = await tx.role.create({
+            data: {
+                name: 'Super Admin',
+                summary: 'Administrador del sistema y soporte técnico',
+                permissions: {
+                    create: [
+                        { module: 'users',              actions: crudActions },
+                        { module: 'products',           actions: crudActions },
+                        { module: 'categories',         actions: crudActions },
+                        { module: 'brands',             actions: crudActions },
+                        { module: 'clients',            actions: crudActions },
+                        { module: 'leads',              actions: crudActions },
+                        { module: 'providers',          actions: crudReportActions },
+                        { module: 'providersCompanies', actions: crudReportActions },
+                        { module: 'warehouses',         actions: crudReportActions },
+                        { module: 'inventories',        actions: crudReportActions },
+                        { module: 'roles',              actions: crudActions },
+                        { module: 'quotations',         actions: crudReportActions },
+                        { module: 'sales',              actions: crudReportActions },
+                        { module: 'imports',            actions: crudReportActions },
+                    ],
+                },
             },
-        },
-    });
+        });
 
-    const salesRole = await prisma.role.create({
-        data: {
-            name: 'Sales',
-            summary: 'Encargado de ventas y cotizaciones',
-            permissions: {
-                connect: [
-                    { id: clientsPermissions.id },
-                    { id: productsPermissions.id },
-                    { id: salesPermissions.id },
-                    { id: quotationsPermissions.id },
-                ],
+        const salesRole = await tx.role.create({
+            data: {
+                name: 'Sales',
+                summary: 'Encargado de gestionar ventas y cotizaciones',
+                permissions: {
+                    create: [
+                        { module: 'clients',    actions: crudActions },
+                        { module: 'quotations', actions: crudReportActions },
+                        { module: 'sales',      actions: crudReportActions },
+                    ],
+                },
             },
-        },
-    });
+        });
 
-    const inventoryRole = await prisma.role.create({
-        data: {
-            name: 'Inventory Manager',
-            summary: 'Encargado de gestión de inventarios y almacenes',
-            permissions: {
-                connect: [
-                    { id: productsPermissions.id },
-                    { id: warehousesPermissions.id },
-                    { id: inventoriesPermissions.id },
-                    { id: importsPermissions.id },
-                ],
+        const inventoryRole = await tx.role.create({
+            data: {
+                name: 'Inventory Manager',
+                summary: 'Responsable de la gestión de inventarios y almacenes',
+                permissions: {
+                    create: [
+                        { module: 'products',    actions: crudActions },
+                        { module: 'warehouses',  actions: crudReportActions },
+                        { module: 'inventories', actions: crudReportActions },
+                    ],
+                },
             },
-        },
-    });
+        });
 
-    const clientServiceRole = await prisma.role.create({
-        data: {
-            name: 'Customer Service',
-            summary: 'Encargado de atención al cliente y soporte',
-            permissions: {
-                connect: [
-                    { id: clientsPermissions.id },
-                    { id: salesPermissions.id },
-                    { id: quotationsPermissions.id },
-                ],
+        const clientServiceRole = await tx.role.create({
+            data: {
+                name: 'Customer Service',
+                summary: 'Atención al cliente y soporte postventa',
+                permissions: {
+                    create: [
+                        { module: 'clients', actions: crudActions },
+                        { module: 'leads',   actions: crudActions },
+                    ],
+                },
             },
-        },
+        });
+
+        return { adminRole, salesRole, inventoryRole, clientServiceRole };
     });
 
-    // Crear usuario Admin
-    await prisma.user.delete({
-        where: { email: 'admin@correo.com' },
-    }).catch(() => {
-        // Ignorar si el usuario no existe
-    })
+    const { adminRole, salesRole, inventoryRole, clientServiceRole } = createRolesTransaction;
 
-    await prisma.user.create({
-        data: {
-            email: 'admin@correo.com',
-            password: await bcrypt.hash('admin123', 10),
-            name: 'Admin',
-            lastname: 'User',
-            roleId: adminRole.id,
-            ci: '123456789',
-        }
-    })
-
-    // Crear usuario Sales
-    await prisma.user.delete({
-        where: { email: 'sales@correo.com' },
-    }).catch(() => {
-        // Ignorar si el usuario no existe
-    })
-
-    await prisma.user.create({
-        data: {
-            email: 'sales@correo.com',
-            password: await bcrypt.hash('sales123', 10),
-            name: 'Sales',
-            lastname: 'User',
-            roleId: salesRole.id,
-            ci: '987654321',
-        }
-    })
-
-    // Crear usuario Inventory Manager
-    await prisma.user.delete({
-        where: { email: 'inventory@correo.com' },
-    }).catch(() => {
-        // Ignorar si el usuario no existe
-    })
-
-    await prisma.user.create({
-        data: {
-            email: 'inventory@correo.com',
-            password: await bcrypt.hash('inventory123', 10),
-            name: 'Inventory',
-            lastname: 'Manager',
-            roleId: inventoryRole.id,
-            ci: '456789123',
-        }
-    })
-
-    // Crear usuario Customer Service
-    await prisma.user.delete({
-        where: { email: 'cliente@correo.com' },
-    }).catch(() => {
-        // Ignorar si el usuario no existe
-    })
-
-    await prisma.user.create({
-        data: {
-            email: 'cliente@correo.com',
-            password: await bcrypt.hash('cliente123', 10),
-            name: 'Customer',
-            lastname: 'Service',
-            roleId: clientServiceRole.id,
-            ci: '321654987',
-        }
-    })
+    // Crear usuarios
+    await prisma.user.createMany({
+        data: [
+            {
+                email: 'admin@correo.com',
+                password: await bcrypt.hash('admin123', 10),
+                name: 'Admin',
+                lastname: 'User',
+                roleId: adminRole.id,
+                ci: '123456789',
+            },
+            {
+                email: 'sales@correo.com',
+                password: await bcrypt.hash('sales123', 10),
+                name: 'Sales',
+                lastname: 'User',
+                roleId: salesRole.id,
+                ci: '987654321',
+            },
+            {
+                email: 'inventory@correo.com',
+                password: await bcrypt.hash('inventory123', 10),
+                name: 'Inventory',
+                lastname: 'Manager',
+                roleId: inventoryRole.id,
+                ci: '456789123',
+            },
+            {
+                email: 'cliente@correo.com',
+                password: await bcrypt.hash('cliente123', 10),
+                name: 'Customer',
+                lastname: 'Service',
+                roleId: clientServiceRole.id,
+                ci: '321654987',
+            },
+        ],
+    });
 
 
     console.log('✅ Roles y permisos creados:', {
         adminRole,
+        salesRole,
+        inventoryRole,
+        clientServiceRole
     });
 }
 

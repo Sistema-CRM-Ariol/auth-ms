@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { FilterPaginationDto } from 'src/common/dto/filter-pagination.dto';
@@ -9,9 +9,41 @@ import { RpcException } from '@nestjs/microservices';
 @Injectable()
 export class UsersService {
 
+    private readonly logger = new Logger('UsersService');
+
     constructor(
         private readonly prisma: PrismaService,
     ) { }
+
+    // ─── Dashboard Stats ────────────────────────────────────────────
+    async getStats() {
+
+        const now = new Date();
+        const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+        const [totalUsers, activeIn24h, admins] = await Promise.all([
+            this.prisma.user.count(),
+            this.prisma.user.count({
+                where: {
+                    isActive: true,
+                    updatedAt: { gte: last24h },
+                },
+            }),
+            this.prisma.user.count({
+                where: {
+                    role: {
+                        name: { contains: 'admin', mode: 'insensitive' },
+                    },
+                },
+            }),
+        ]);
+
+        return {
+            totalUsers,
+            activeIn24h,
+            admins,
+        };
+    }
 
     async create(createUserDto: CreateUserDto) {
         try {

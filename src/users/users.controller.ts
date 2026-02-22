@@ -9,6 +9,11 @@ import { FilterPaginationDto } from 'src/common/dto/filter-pagination.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @MessagePattern('users.stats')
+  getStats() {
+    return this.usersService.getStats();
+  }
+
   @MessagePattern('createUser')
   create(@Payload() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
