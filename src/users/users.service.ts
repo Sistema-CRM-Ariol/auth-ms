@@ -83,7 +83,7 @@ export class UsersService {
     }
 
     async findAll(filterPaginationDto: FilterPaginationDto) {
-        const { page, limit, search, isActive } = filterPaginationDto;
+        const { page, limit, search = true, isActive } = filterPaginationDto;
 
         const filters: any[] = [];
 

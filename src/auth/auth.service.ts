@@ -16,7 +16,7 @@ export class AuthService {
     ) { }
 
     async register(registerUserDto: RegisterUserDto) {
-        const { permissions, password, ...newUser } = registerUserDto;
+        const { password, ...newUser } = registerUserDto;
         try {
 
             const userExists = await this.prisma.user.findFirst({
@@ -62,7 +62,7 @@ export class AuthService {
             console.log(error)
             throw new RpcException({
                 status: HttpStatus.BAD_REQUEST,
-                message: error.message
+                message: "Error al registrar usuario",
             });
         }
     }
@@ -74,7 +74,7 @@ export class AuthService {
         try {
 
             const user = await this.prisma.user.findFirst({
-                where: { email },
+                where: { email, isActive: true },
                 include: {
                     role: {
                         include: {
@@ -132,7 +132,7 @@ export class AuthService {
         } catch (error) {
             throw new RpcException({
                 status: HttpStatus.BAD_REQUEST,
-                message: error.message
+                message: "Error al iniciar sesión",
             });
         }
     }
